@@ -1,0 +1,5 @@
+names:
+  0: license_plate
+path: dataset
+train: train/images
+val: valid/images

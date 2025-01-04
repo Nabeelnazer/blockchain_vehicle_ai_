@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>License Plate Detection Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Roboto', sans-serif;
+        }
+        .dashboard-card {
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+        }
+        .table-hover tbody tr:hover {
+            background-color: rgba(0,123,255,0.05);
+            cursor: pointer;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding: 0.5rem 0.75rem;
+            margin: 0 2px;
+            border-radius: 4px;
+        }
+        .plate-badge {
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card dashboard-card">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0">
+                            <i class="fas fa-car-alt"></i> License Plate Detection Dashboard
+                        </h2>
+                        <div class="stats">
+                            <span class="badge bg-light text-dark">
+                                Total Entries: {{ plates|length }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <table id="plateTable" class="table table-striped table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Plate Number</th>
+                                    <th>Entry Time</th>
+                                    <th>Confidence</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for plate in plates %}
+                                <tr data-image-path="{{ plate.image_path }}">
+                                    <td>
+                                        <span class="badge bg-primary plate-badge">
+                                            {{ plate.plate_number }}
+                                        </span>
+                                    </td>
+                                    <td>{{ plate.entry_time }}</td>
+                                    <td>
+                                        <div class="progress">
+                                            <div 
+                                                class="progress-bar 
+                                                {% if plate.confidence > 0.8 %}bg-success
+                                                {% elif plate.confidence > 0.5 %}bg-warning
+                                                {% else %}bg-danger{% endif %}" 
+                                                role="progressbar" 
+                                                style="width: {{ (plate.confidence * 100)|round|int }}%"
+                                                aria-valuenow="{{ (plate.confidence * 100)|round|int }}" 
+                                                aria-valuemin="0" 
+                                                aria-valuemax="100">
+                                                {{ "%.2f"|format(plate.confidence) }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info view-image">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Modal -->
+        <div class="modal fade" id="imageModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">License Plate Details</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img id="modalImage" class="img-fluid rounded" src="">
+                        <div id="plateDetails" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#plateTable').DataTable({
+                pageLength: 10,
+                responsive: true,
+                order: [[1, 'desc']],
+                language: {
+                    searchPlaceholder: "Search plates...",
+                    lengthMenu: "Show _MENU_ entries"
+                },
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ]
+            });
+
+            $('.view-image').on('click', function() {
+                const imagePath = $(this).closest('tr').data('image-path');
+                const plateNumber = $(this).closest('tr').find('td:first .badge').text();
+                const entryTime = $(this).closest('tr').find('td:nth-child(2)').text();
+
+                fetch(`/image/${imagePath.split('/').pop()}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        $('#modalImage').attr('src', `data:image/jpeg;base64,${data.image}`);
+                        $('#plateDetails').html(`
+                            <h5 class="badge bg-primary">${plateNumber}</h5>
+                            <p>Entered at: ${entryTime}</p>
+                        `);
+                        new bootstrap.Modal(document.getElementById('imageModal')).show();
+                    });
+            });
+        });
+    </script>
+</body>
+</html> 
