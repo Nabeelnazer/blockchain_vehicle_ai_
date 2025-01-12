@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -37,6 +36,15 @@ class VehicleResponse(BaseModel):
     success: bool
     message: str
     data: Optional[dict] = None
+
+# Base models for request/response
+class DetectionRequest(BaseModel):
+    image: str
+
+class DetectionResponse(BaseModel):
+    plate_number: str
+    confidence: float
+    timestamp: datetime
 
 # Database connection
 def get_db():
