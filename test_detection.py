@@ -33,7 +33,9 @@ def test_detection():
         
         # Draw rectangles around detected plates
         for x, y, w, h in plates:
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            print(f"x: {x}, y: {y}, w: {w}, h: {h}")
+            x, y, w, h = int(x), int(y), int(w), int(h)
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
             cv2.putText(frame, f"Plate", (x, y-10),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
         

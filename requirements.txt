@@ -5,12 +5,7 @@ python-multipart>=0.0.5
 tabulate>=0.8.9
 opencv-python==4.8.0.76
 ultralytics>=8.0.0
-<<<<<<< Updated upstream
 opencv-python>=4.8.0
 pyyaml>=6.0
 python-dotenv>=0.19.0
 easyocr>=1.7.0
-=======
-easyocr>=1.7.0
-python-dotenv>=0.19.0
->>>>>>> Stashed changes
