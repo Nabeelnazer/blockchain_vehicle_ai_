@@ -1,0 +1,19 @@
+fnumberplate_parking_system/
+│
+├── detection/
+│   ├── yolo_detector.py        # YOLO number plate detection
+│   └── preprocessing.py        # Image preprocessing
+│
+├── ocr/
+│   ├── ocr_stabilizer.py       # Consistent OCR reading
+│   └── tesseract_reader.py     # Tesseract OCR integration
+│
+├── database/
+│   ├── postgres_connection.py  # Database connection
+│   └── vehicle_log.py          # Vehicle entry/exit logging
+│
+├── blockchain/
+│   └── smart_contract.py       # Future blockchain integration
+│
+├── main.py                     # Main application logic
+└── requirements.txt            # Project dependencies
