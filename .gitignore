@@ -1,32 +1,65 @@
-# Python cache files
+# Python
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Virtual environment
+# Virtual Environment
 venv/
+ENV/
 env/
-*.env
 
-# Jupyter Notebook checkpoints
-.ipynb_checkpoints/
-
-# PyTorch model files
-*.pt
-*.pth
-
-# Dataset files (if you don't want to track them)
-dataset/
-model_backups/
-
-# Logs
-*.log
-
-# IDE specific files
-.vscode/
+# IDE
 .idea/
-*.sublime-project
-*.sublime-workspace
-
-# OS generated files
+.vscode/
+*.swp
+*.swo
 .DS_Store
-Thumbs.db
+
+# Project specific
+*.pt
+temp_*
+*.log
+runs/
+*.onnx
+*.engine
+*.trt
+test_*.py
+xml_files/
+
+# Blockchain
+node_modules/
+ganache/
+
+# Environment variables
+.env
+
+# Generated files
+vehicle_logs.csv
+*.jpg
+*.jpeg
+*.png
+*.mp4
+*.avi
+*.mov
+
+# Keep
+!samples/*.jpg
+!samples/*.jpeg
+!samples/*.png

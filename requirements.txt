@@ -1,11 +1,15 @@
-fastapi>=0.68.0
-uvicorn>=0.15.0
-pydantic>=1.8.0
-python-multipart>=0.0.5
-tabulate>=0.8.9
-opencv-python==4.8.0.76
-ultralytics>=8.0.0
-opencv-python>=4.8.0
-pyyaml>=6.0
+# Core Dependencies
+paddlepaddle
+paddleocr
+opencv-python>=4.5.0
+numpy>=1.21.0
+streamlit>=1.28.0
+web3>=6.0.0
 python-dotenv>=0.19.0
-easyocr>=1.7.0
+
+# Computer Vision
+ultralytics  # for YOLO
+
+# Testing Dependencies
+pytest>=7.0.0
+pytest-cov>=3.0.0

@@ -1,27 +1,37 @@
-from ultralytics import YOLO
-import cv2
+from ocr.ocr import OCRProcessor
+from blockchain.blockchain_manager import BlockchainManager
+import os
+import logging
 
-class NumberPlateDetector:
-    def __init__(self, model_path):
-        # Load the pre-trained YOLOv8 model
-        self.model = YOLO(model_path)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-    def detect_plates(self, frame):
-        # Perform inference on the input frame
-        results = self.model(frame)
+def process_document(image_path):
+    try:
+        # Initialize components
+        ocr_processor = OCRProcessor()
+        blockchain_manager = BlockchainManager()
+        
+        # Process image with OCR
+        logger.info(f"Processing image: {image_path}")
+        ocr_results = ocr_processor.process_image(image_path)
+        
+        # Store results on blockchain
+        logger.info("Storing results on blockchain")
+        tx_receipt = blockchain_manager.store_ocr_hash(ocr_results)
+        
+        return {
+            'ocr_results': ocr_results,
+            'blockchain_tx': tx_receipt.transactionHash.hex()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error processing document: {str(e)}")
+        raise
 
-        # Extract bounding boxes and confidence scores
-        plates = []
-        for result in results:
-            # Iterate through detected objects
-            for box in result.boxes:
-                # Get the bounding box coordinates and confidence
-                x1, y1, x2, y2 = box.xyxy[0]  # Get coordinates
-                confidence = box.conf[0]      # Get confidence score
-                class_id = int(box.cls[0])    # Get class ID
-
-                # Assuming class_id 0 corresponds to number plates
-                if class_id == 0 and confidence > 0.5:  # Adjust confidence threshold as needed
-                    plates.append((x1, y1, x2, y2))
-
-        return plates
+if __name__ == "__main__":
+    # Example usage
+    image_path = "path/to/your/image.jpg"
+    results = process_document(image_path)
+    print(f"OCR Results: {results['ocr_results']}")
+    print(f"Blockchain Transaction: {results['blockchain_tx']}")
