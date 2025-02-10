@@ -1,0 +1,202 @@
+{
+    "KL 47 F7 876": [
+        {
+            "plate_number": "KL 47 F7 876",
+            "timestamp": "2025-02-10T15:18:46.734484",
+            "confidence": 0.9092476963996887,
+            "transaction_hash": "3b4ec4dd90eb898b2598b99431af249b4e1af4f7386372dc7ae0f91601efc9c9"
+        }
+    ],
+    "KL 47 F7 878": [
+        {
+            "plate_number": "KL 47 F7 878",
+            "timestamp": "2025-02-10T15:18:48.188062",
+            "confidence": 0.9321844577789307,
+            "transaction_hash": "2ceb0f8329c78f1290ec87876398788e5a2eb382b296f4c63f350ed236b98f47"
+        },
+        {
+            "plate_number": "KL 47 F7 878",
+            "timestamp": "2025-02-10T15:28:43.630763",
+            "confidence": 0.9668902158737183,
+            "transaction_hash": "f909b1f8556b9a5bab56dd49c9a5f4ab45da2c9dd96ca4b65644751bcaa82679"
+        }
+    ],
+    "KL 03 MF 4477": [
+        {
+            "plate_number": "KL 03 MF 4477",
+            "timestamp": "2025-02-10T15:24:11.808590",
+            "confidence": 0.8604291081428528,
+            "transaction_hash": "27d305f3e6d79fdcfbf0bcb4f39efcd4036f4ad823d96a33843344cd0a88f246"
+        },
+        {
+            "plate_number": "KL 03 MF 4477",
+            "timestamp": "2025-02-10T15:27:37.704228",
+            "confidence": 0.9034145474433899,
+            "transaction_hash": "b041aa35d9a9b58517a97350d7c05f8a6136c8b62caa86c587a4dbfe25562477"
+        },
+        {
+            "plate_number": "KL 03 MF 4477",
+            "timestamp": "2025-02-10T15:36:06.225216",
+            "confidence": 0.9776946902275085,
+            "transaction_hash": "5839a2f412c91aeb76fb5f7f49878eb0d331c77a73ed7319a890073d7da9d04d"
+        }
+    ],
+    "KLOMF": [
+        {
+            "plate_number": "KLOMF",
+            "timestamp": "2025-02-10T15:24:18.075357",
+            "confidence": 0.784890353679657,
+            "transaction_hash": "992987a0b19f9474d9664836248576800753eaade38ebe605982a366d95c9f25"
+        }
+    ],
+    "KL O3 MF 4477": [
+        {
+            "plate_number": "KL O3 MF 4477",
+            "timestamp": "2025-02-10T15:25:03.251574",
+            "confidence": 0.9053747057914734,
+            "transaction_hash": "7526e85dc3ee2c5890c86eafe4c3a73620b3b2a74ecaf094cb43331977bfce21"
+        },
+        {
+            "plate_number": "KL O3 MF 4477",
+            "timestamp": "2025-02-10T15:27:40.085820",
+            "confidence": 0.9071134924888611,
+            "transaction_hash": "60930771a63b71abf20e7ce8e050f14a79b3b31bec0692d1a2b9911f36d6cf1c"
+        }
+    ],
+    "L03MF447": [
+        {
+            "plate_number": "L03MF447",
+            "timestamp": "2025-02-10T15:27:44.078144",
+            "confidence": 0.8983515501022339,
+            "transaction_hash": "baee78fd2a0c29a40d5cb3da6ab16218a95db96cf82a4bfb73c0d20c104d8e75"
+        }
+    ],
+    "47F7878": [
+        {
+            "plate_number": "47F7878",
+            "timestamp": "2025-02-10T15:28:44.763896",
+            "confidence": 0.9684606790542603,
+            "transaction_hash": "11b1af8a14f30cc1c60efe984da1e15d7eea24b4aa552690fad9a8ab815c1321"
+        }
+    ],
+    "7878": [
+        {
+            "plate_number": "7878",
+            "timestamp": "2025-02-10T15:28:55.443945",
+            "confidence": 0.9907523393630981,
+            "transaction_hash": "d1f1de11d260f54732528f3c210fe95a6df559c171eeef5090dfd9faaa4d91bc"
+        }
+    ],
+    "XL47F7878": [
+        {
+            "plate_number": "XL47F7878",
+            "timestamp": "2025-02-10T15:28:56.688616",
+            "confidence": 0.8956516981124878,
+            "transaction_hash": "51f25848a97c8183533ffb6b8875950263b26bdb4f3864a38e81484e8a069f8a"
+        }
+    ],
+    "L47F7878": [
+        {
+            "plate_number": "L47F7878",
+            "timestamp": "2025-02-10T15:28:58.119875",
+            "confidence": 0.9782884120941162,
+            "transaction_hash": "8c05696ca8d373c7f87af187caaa539d33b080efa3f800b9a0ba8fd82b349a8d"
+        }
+    ],
+    "1479787": [
+        {
+            "plate_number": "1479787",
+            "timestamp": "2025-02-10T15:35:14.579997",
+            "confidence": 0.5901423692703247,
+            "transaction_hash": "4eac5656355b38e638a5c0b1d435ee359425ff8e036b2413fb9a65292f889d89"
+        }
+    ],
+    "04": [
+        {
+            "plate_number": "04",
+            "timestamp": "2025-02-10T15:35:18.464434",
+            "confidence": 0.7176488041877747,
+            "transaction_hash": "d066e5ac83a450537f686ab5b695c7e1141b61a07ce09db153e728964c9226ae"
+        }
+    ],
+    "KA99": [
+        {
+            "plate_number": "KA99",
+            "timestamp": "2025-02-10T15:35:20.692292",
+            "confidence": 0.9958546161651611,
+            "transaction_hash": "329447d253950a23f40620af4c425ad80ae24759e52eba523abac84c3b035dd8"
+        }
+    ],
+    "HR26005551": [
+        {
+            "plate_number": "HR26005551",
+            "timestamp": "2025-02-10T15:35:33.264723",
+            "confidence": 0.976718544960022,
+            "transaction_hash": "9d34147f567841c0b907fea82197fce54a2cca1e5519bad26de63c6677b78c97"
+        }
+    ],
+    "LTE": [
+        {
+            "plate_number": "LTE",
+            "timestamp": "2025-02-10T15:35:59.770161",
+            "confidence": 0.8769702911376953,
+            "transaction_hash": "aa750b17c4e01853e76c352692b19906965fc7ace376c28c742860bbd6639773"
+        }
+    ],
+    "LTE2": [
+        {
+            "plate_number": "LTE2",
+            "timestamp": "2025-02-10T15:36:03.047671",
+            "confidence": 0.6779865622520447,
+            "transaction_hash": "7c78e93ea1b5ccb2807b7138169330c9703109aec993ee765ecd3673be0afa74"
+        }
+    ],
+    "OE": [
+        {
+            "plate_number": "OE",
+            "timestamp": "2025-02-10T15:36:08.719455",
+            "confidence": 0.6640172600746155,
+            "transaction_hash": "89275c0a8d226952cf1eabd33da4cfe146c27bfd4243157fab2a2c28e490c621"
+        }
+    ],
+    "INFORMATICS": [
+        {
+            "plate_number": "INFORMATICS",
+            "timestamp": "2025-02-10T15:45:16.558460",
+            "confidence": 0.9773169159889221,
+            "transaction_hash": "c4ec3e175b474f43d421b633c70e7a36217ebde19ed771666e5a907451767780"
+        }
+    ],
+    "INTORMATICS": [
+        {
+            "plate_number": "INTORMATICS",
+            "timestamp": "2025-02-10T15:46:33.522414",
+            "confidence": 0.8900623321533203,
+            "transaction_hash": "9273b91ff87b2949ac8bcdeee565cb927affb195683c62923282a09e39a16110"
+        }
+    ],
+    "INTORMATCS": [
+        {
+            "plate_number": "INTORMATCS",
+            "timestamp": "2025-02-10T15:46:35.504473",
+            "confidence": 0.9309402704238892,
+            "transaction_hash": "58bf7c8aafa93f01b734743bc3c264e3c35aab8ff43f8a2dfc6ff57e373331e5"
+        }
+    ],
+    "3INFORMATICS": [
+        {
+            "plate_number": "3INFORMATICS",
+            "timestamp": "2025-02-10T15:46:38.679840",
+            "confidence": 0.828324556350708,
+            "transaction_hash": "7bfe0e7b4f74de6a8f945a9f5b71b70341c7e521b13bacb285ad3d1434772373"
+        }
+    ],
+    "INTO": [
+        {
+            "plate_number": "INTO",
+            "timestamp": "2025-02-10T15:46:59.406667",
+            "confidence": 0.8252044916152954,
+            "transaction_hash": "aa32bcab0c5d49cdbc6bda8d08e37c5f97b9b4e42a1aea4d195a9ce5543d875f"
+        }
+    ]
+}
