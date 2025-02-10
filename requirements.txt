@@ -1,15 +1,43 @@
-# Core Dependencies
+# Core ML and CV
 paddlepaddle
 paddleocr
-opencv-python>=4.5.0
+opencv-python>=4.8.0
 numpy>=1.21.0
-streamlit>=1.28.0
-web3>=6.0.0
-python-dotenv>=0.19.0
+ultralytics>=8.0.0
+easyocr>=1.7.0
 
-# Computer Vision
-ultralytics  # for YOLO
+# Blockchain
+web3>=6.0.0
+py-solc-x
+
+# Web and API
+fastapi
+uvicorn
+streamlit
+
+# Database
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.6
+postgresql>=0.0.0
+
+# Utilities
+python-dotenv
 
 # Testing Dependencies
 pytest>=7.0.0
 pytest-cov>=3.0.0
+
+# Blockchain Development
+hardhat
+@nomicfoundation/hardhat-toolbox
+@nomicfoundation/hardhat-network-helpers
+@nomicfoundation/hardhat-chai-matchers
+@nomiclabs/hardhat-ethers
+@nomiclabs/hardhat-waffle
+ethereum-waffle
+chai
+ethers
+
+# Blockchain Compilation
+py-solc-x
+solc-select

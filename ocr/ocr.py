@@ -1,46 +1,98 @@
-from paddleocr import PaddleOCR
 import cv2
 import numpy as np
-from PIL import Image
+import re
+import easyocr
+from collections import deque
 
-class OCRProcessor:
-    def __init__(self, lang='en'):
-        self.ocr = PaddleOCR(use_angle_cls=True, lang=lang)
+class OCRStabilizer:
+    def __init__(self, lang=['en']):
+        # Initialize EasyOCR
+        self.reader = easyocr.Reader(lang)
         
-    def process_image(self, image_input):
+        # History for stabilizing detections
+        self.history = deque(maxlen=5)
+    
+    def preprocess_image(self, image):
         """
-        Process an image and return the OCR results
-        Args:
-            image_input: Can be either a file path or a PIL Image object
+        Preprocess image for better OCR detection
+        """
+        # Convert to grayscale
+        if len(image.shape) == 3:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = image
+        
+        # Apply adaptive thresholding
+        thresh = cv2.adaptiveThreshold(
+            gray, 255, 
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+            cv2.THRESH_BINARY, 11, 2
+        )
+        
+        return thresh
+    
+    def clean_plate_text(self, text):
+        """
+        Clean and format detected text
+        """
+        # Remove non-alphanumeric characters
+        cleaned = re.sub(r'[^A-Z0-9]', '', text.upper())
+        
+        # Kerala plate format validation (optional)
+        if cleaned.startswith('KL'):
+            # Try to format as KL DD XX NNNN
+            if len(cleaned) >= 8:
+                return f"KL {cleaned[2:4]} {cleaned[4:6]} {cleaned[6:]}"
+        
+        return cleaned
+    
+    def get_stable_plate_number(self, frame):
+        """
+        Get stable plate number reading
         """
         try:
-            # Handle different input types
-            if isinstance(image_input, str):
-                img = cv2.imread(image_input)
-                if img is None:
-                    raise ValueError(f"Unable to load image at {image_input}")
-            elif isinstance(image_input, Image.Image):
-                img = cv2.cvtColor(np.array(image_input), cv2.COLOR_RGB2BGR)
-            else:
-                raise ValueError("Input must be either a file path or PIL Image object")
+            # Preprocess image
+            processed_frame = self.preprocess_image(frame)
             
-            # Run OCR
-            result = self.ocr.ocr(img, cls=True)
+            # Perform OCR
+            results = self.reader.readtext(processed_frame)
             
-            # Format results
-            extracted_text = []
-            if result is not None:  # Add null check
-                for line in result:
-                    for word_info in line:
-                        text = word_info[1][0]  # Get the text
-                        confidence = word_info[1][1]  # Get the confidence score
-                        extracted_text.append({
-                            'text': text,
-                            'confidence': confidence,
-                            'bbox': word_info[0]
-                        })
-                    
-            return extracted_text
+            # Process detected texts
+            detected_texts = []
+            for detection in results:
+                text = detection[1]  # Detected text
+                confidence = detection[2]  # Confidence score
+                
+                # Clean text
+                cleaned_text = self.clean_plate_text(text)
+                
+                if cleaned_text and len(cleaned_text) >= 4:
+                    detected_texts.append({
+                        'text': cleaned_text,
+                        'confidence': confidence
+                    })
             
+            # If no texts detected, return None
+            if not detected_texts:
+                return None
+            
+            # Get the most confident text
+            best_text = max(detected_texts, key=lambda x: x['confidence'])
+            
+            # Add to history
+            self.history.append(best_text['text'])
+            
+            # Check for stable reading
+            from collections import Counter
+            counts = Counter(self.history)
+            most_common = counts.most_common(1)[0]
+            
+            # If we have a consistent reading
+            if most_common[1] >= 2:
+                return most_common[0]
+            
+            return None
+        
         except Exception as e:
-            raise Exception(f"OCR processing failed: {str(e)}")
+            print(f"OCR Error: {str(e)}")
+            return None
