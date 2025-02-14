@@ -39,6 +39,12 @@
             "timestamp": "2025-02-10T15:36:06.225216",
             "confidence": 0.9776946902275085,
             "transaction_hash": "5839a2f412c91aeb76fb5f7f49878eb0d331c77a73ed7319a890073d7da9d04d"
+        },
+        {
+            "plate_number": "KL 03 MF 4477",
+            "timestamp": "2025-02-10T15:50:58.164463",
+            "confidence": 0.9234204888343811,
+            "transaction_hash": "1a5a8cde364dd5df4e75ad5c33d8ddc1a1ce8ac29852de6c77497862caa719ec"
         }
     ],
     "KLOMF": [
@@ -197,6 +203,38 @@
             "timestamp": "2025-02-10T15:46:59.406667",
             "confidence": 0.8252044916152954,
             "transaction_hash": "aa32bcab0c5d49cdbc6bda8d08e37c5f97b9b4e42a1aea4d195a9ce5543d875f"
+        }
+    ],
+    "INLORMATICS": [
+        {
+            "plate_number": "INLORMATICS",
+            "timestamp": "2025-02-10T15:50:09.191175",
+            "confidence": 0.9126655459403992,
+            "transaction_hash": "51ee8efa2e17f285ad83a190e563faf7157d2fd86fe86d088fab725c504ae5b1"
+        }
+    ],
+    "5G": [
+        {
+            "plate_number": "5G",
+            "timestamp": "2025-02-10T15:50:45.594865",
+            "confidence": 0.7094348073005676,
+            "transaction_hash": "b8a45d390b0d09b1932a0b67b907119df65df2f5c609f62167bc362436cf0823"
+        }
+    ],
+    "LO3MF4477": [
+        {
+            "plate_number": "LO3MF4477",
+            "timestamp": "2025-02-10T15:50:50.767405",
+            "confidence": 0.9648539423942566,
+            "transaction_hash": "c3496676d11f2a5534db43ca79f140914609c8e129105df4ee54cc1540472c0d"
+        }
+    ],
+    "OSG23": [
+        {
+            "plate_number": "OSG23",
+            "timestamp": "2025-02-10T15:50:53.585455",
+            "confidence": 0.8824341893196106,
+            "transaction_hash": "3a34ee4f429f7173aaf19198d6e1746b7bd33c441f71dcdb1cdfe9b390452216"
         }
     ]
 }

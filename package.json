@@ -1,0 +1,51 @@
+{
+  "name": "blockchain-vehicle-ai",
+  "version": "1.0.0",
+  "description": "Vehicle Detection Blockchain Project",
+  "main": "index.js",
+  "scripts": {
+    "clean": "hardhat clean",
+    "compile": "hardhat compile",
+    "deploy": "hardhat run blockchain/scripts/deploy.js",
+    "node": "hardhat node",
+    "prepare": "npm install --legacy-peer-deps",
+    "audit": "npm audit",
+    "audit:fix": "npm audit fix --force --legacy-peer-deps",
+    "update": "npm update"
+  },
+  "keywords": [
+    "blockchain",
+    "vehicle",
+    "detection"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.5",
+    "@nomicfoundation/hardhat-ethers": "^3.0.5",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.12",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@nomicfoundation/hardhat-verify": "^2.0.5",
+    "@typechain/ethers-v6": "^0.5.1",
+    "@typechain/hardhat": "^9.1.0",
+    "@types/mocha": "^10.0.6",
+    "chai": "^4.3.10",
+    "hardhat": "^2.22.18",
+    "hardhat-gas-reporter": "^1.0.9",
+    "solidity-coverage": "^0.8.11",
+    "ts-node": "^10.9.2",
+    "typechain": "^8.3.1",
+    "typescript": "^5.3.3"
+  },
+  "overrides": {
+    "ws": "^8.14.2",
+    "elliptic": "^6.5.8",
+    "cookie": "^0.7.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "directories": {
+    "test": "test"
+  }
+}

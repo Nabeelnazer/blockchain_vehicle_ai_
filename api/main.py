@@ -26,7 +26,6 @@ app.add_middleware(
 # Initialize components
 detector = NumberPlateDetector('best.pt')
 ocr = OCRStabilizer()
-blockchain_manager = BlockchainManager()
 vehicle_logger = VehicleLogger()
 
 @app.post("/detect/")
@@ -56,6 +55,7 @@ async def detect_vehicle(file: UploadFile = File(...)):
                 vehicle_logger.log_vehicle_entry(plate_number)
                 
                 # Optional: Blockchain logging
+                blockchain_manager = BlockchainManager()
                 blockchain_tx = blockchain_manager.log_vehicle_entry(plate_number)
                 
                 detected_plates.append({
@@ -86,11 +86,17 @@ def get_recent_entries(limit: int = 10):
 @app.get("/blockchain/verify/{plate_number}")
 def verify_vehicle_entry(plate_number: str):
     """
-    Verify a vehicle entry on blockchain
+    Verify a vehicle's blockchain entry
     """
     try:
-        is_verified = blockchain_manager.verify_vehicle_entry(plate_number)
-        return {"plate_number": plate_number, "verified": is_verified}
+        blockchain_manager = BlockchainManager()
+        is_active = blockchain_manager.contract.functions.isVehicleActive(plate_number).call()
+        
+        return {
+            "plate_number": plate_number,
+            "is_active": is_active,
+            "verified": True
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

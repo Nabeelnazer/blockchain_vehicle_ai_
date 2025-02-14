@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import json
 
 def install_dependencies():
     """Install project dependencies"""
@@ -11,48 +12,51 @@ def install_dependencies():
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt'])
 
 def setup_blockchain():
-    """Setup blockchain environment"""
+    """
+    Setup blockchain environment with Hardhat
+    """
     try:
-        # Ensure solcx is installed
-        subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'py-solc-x'])
+        # Ensure Hardhat is installed
+        subprocess.check_call(['npx', '-v'])
         
-        # Now import after installation
-        try:
-            from solcx import compile_standard, install_solc
-        except ImportError:
-            print("Failed to import solcx. Please install manually.")
+        # Compile contracts
+        compile_result = subprocess.run(
+            ['npx', 'hardhat', 'compile'], 
+            capture_output=True, 
+            text=True
+        )
+        
+        if compile_result.returncode != 0:
+            print("Compilation failed:")
+            print(compile_result.stderr)
             return None
         
-        # Install Solidity compiler
-        install_solc('0.8.0')
+        # Deploy contract
+        deploy_result = subprocess.run(
+            ['npx', 'hardhat', 'run', 'blockchain/scripts/deploy.js'], 
+            capture_output=True, 
+            text=True
+        )
         
-        # Compile contract
-        contract_path = 'blockchain/contracts/VehicleRegistry.sol'
-        if not os.path.exists(contract_path):
-            print(f"Contract file not found at {contract_path}")
+        if deploy_result.returncode != 0:
+            print("Deployment failed:")
+            print(deploy_result.stderr)
             return None
         
-        with open(contract_path, 'r') as file:
-            contract_source_code = file.read()
+        # Read deployment info
+        deployment_path = 'deployment-info.json'
+        if not os.path.exists(deployment_path):
+            print(f"Deployment info file not found at {deployment_path}")
+            return None
         
-        compiled_sol = compile_standard({
-            "language": "Solidity",
-            "sources": {
-                "VehicleRegistry.sol": {
-                    "content": contract_source_code
-                }
-            },
-            "settings": {
-                "outputSelection": {
-                    "*": {
-                        "*": ["abi", "metadata", "evm.bytecode", "evm.bytecode.sourceMap"]
-                    }
-                }
-            }
-        }, solc_version="0.8.0")
+        with open(deployment_path, 'r') as f:
+            deployment_info = json.load(f)
         
-        print("Blockchain setup completed successfully!")
-        return compiled_sol
+        return {
+            'address': deployment_info['address'],
+            'abi': deployment_info['abi']
+        }
+    
     except Exception as e:
         print(f"Blockchain setup failed: {e}")
         return None
@@ -64,12 +68,13 @@ def main():
     install_dependencies()
     
     # Setup blockchain
-    compiled_contract = setup_blockchain()
+    contract_info = setup_blockchain()
     
-    if compiled_contract:
-        print("Setup complete! Ready to run the project.")
+    if contract_info:
+        print("Blockchain setup complete!")
+        print(f"Contract Address: {contract_info['address']}")
     else:
-        print("Setup encountered issues. Please check the error messages.")
+        print("Blockchain setup encountered issues.")
 
 if __name__ == "__main__":
     main() 

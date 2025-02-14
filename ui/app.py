@@ -5,10 +5,13 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import streamlit as st
 import cv2
 import numpy as np
-from plate_detection.detector import PlateDetector
+from detection.yolo_detector import NumberPlateDetector
 from blockchain.blockchain_manager import BlockchainManager
 from database.vehicle_log import VehicleLogger
 import time
+import threading
+import pandas as pd
+from datetime import datetime
 
 # Fallback blockchain manager
 try:
@@ -24,222 +27,276 @@ except ImportError:
 class ParkingManagementSystem:
     def __init__(self):
         """
-        Advanced Parking Management System
+        Advanced Parking Management System with Elite Dashboard
         """
-        self.plate_detector = PlateDetector()
+        # Use YOLO detector with best.pt model
+        self.plate_detector = NumberPlateDetector('best.pt')
         self.blockchain_manager = BlockchainManager()
         self.vehicle_logger = VehicleLogger()
         
-        # Enhanced tracking mechanisms
-        self._initialize_session_state()
+        # Camera state management
+        self.camera_active = False
+        self.camera = None
+        self.detection_thread = None
+        
+        # Tracking vehicles in parking
+        self.parked_vehicles = {}
+        
+        # Performance optimization
+        self.frame_skip = 3
+        self.frame_count = 0
+        
+        # Dashboard tracking
+        self.vehicle_log = []
+        
+        # Indian state plate prefixes with regex patterns for more robust matching
+        self.INDIAN_PLATE_PATTERNS = [
+            r'^KL\d{2}[A-Z]{1,2}\d{4}$',  # Kerala
+            r'^KA\d{2}[A-Z]{1,2}\d{4}$',  # Karnataka
+            r'^TN\d{2}[A-Z]{1,2}\d{4}$',  # Tamil Nadu
+            r'^AP\d{2}[A-Z]{1,2}\d{4}$',  # Andhra Pradesh
+            r'^TS\d{2}[A-Z]{1,2}\d{4}$',  # Telangana
+            r'^MH\d{2}[A-Z]{1,2}\d{4}$',  # Maharashtra
+            r'^DL\d{2}[A-Z]{1,2}\d{4}$',  # Delhi
+            r'^WB\d{2}[A-Z]{1,2}\d{4}$',  # West Bengal
+            r'^GJ\d{2}[A-Z]{1,2}\d{4}$',  # Gujarat
+            r'^RJ\d{2}[A-Z]{1,2}\d{4}$'   # Rajasthan
+        ]
     
-    def _initialize_session_state(self):
+    def _start_camera(self):
         """
-        Initialize advanced tracking states
+        Elite Camera Initialization
         """
-        if 'parking_entries' not in st.session_state:
-            st.session_state.parking_entries = {}
-        
-        if 'current_occupancy' not in st.session_state:
-            st.session_state.current_occupancy = 0
-        
-        if 'total_capacity' not in st.session_state:
-            st.session_state.total_capacity = 50  # Configurable parking capacity
-    
-    def run(self):
-        """
-        Main application interface
-        """
-        st.set_page_config(
-            page_title="Smart Parking Management", 
-            page_icon="🚗", 
-            layout="wide"
-        )
-        
-        # Enhanced sidebar navigation
-        page = st.sidebar.radio(
-            "Parking Management", 
-            [
-                "Live Entry/Exit", 
-                "Current Occupancy", 
-                "Vehicle History", 
-                "Analytics", 
-                "Settings"
-            ]
-        )
-        
-        # Dynamic page rendering
-        page_methods = {
-            "Live Entry/Exit": self._live_detection_page,
-            "Current Occupancy": self._occupancy_page,
-            "Vehicle History": self._vehicle_history_page,
-            "Analytics": self._parking_analytics_page,
-            "Settings": self._system_settings_page
-        }
-        
-        page_methods[page]()
-    
-    def _live_detection_page(self):
-        """
-        Advanced entry/exit detection
-        """
-        st.header("🚦 Vehicle Entry/Exit Monitoring")
-        
-        # Detection mode selection
-        detection_mode = st.radio(
-            "Detection Mode", 
-            ["Entry", "Exit"]
-        )
-        
-        # Camera feed setup
-        cap = cv2.VideoCapture(0)
-        frame_placeholder = st.empty()
-        detection_info = st.empty()
-        
-        while True:
-            ret, frame = cap.read()
+        try:
+            if self.camera_active:
+                st.toast("🚨 Camera Already Running!", icon="⚠️")
+                return
+
+            self.camera = cv2.VideoCapture(0)
+            
+            # Pro Camera Configuration
+            self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+            self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+            
+            ret, frame = self.camera.read()
             if not ret:
-                st.error("Camera capture failed")
-                break
+                st.error("Camera Initialization Failed. Check connections.")
+                self.camera.release()
+                return
+
+            self.camera_active = True
+            frame_placeholder = st.empty()
             
-            # Detect plates
-            plates = self.plate_detector.detect_plates(frame)
+            self.detection_thread = threading.Thread(
+                target=self._process_camera_frame, 
+                args=(frame_placeholder,),
+                daemon=True
+            )
+            self.detection_thread.start()
             
-            for x, y, w, h in plates:
-                plate_img = frame[int(y):int(y+h), int(x):int(x+w)]
-                plate_info = self.plate_detector.process_plate(plate_img)
-                
-                if plate_info and plate_info['text']:
-                    # Advanced vehicle tracking
-                    if detection_mode == "Entry":
-                        self._handle_vehicle_entry(plate_info)
-                    else:
-                        self._handle_vehicle_exit(plate_info)
-                    
-                    # Visualization
-                    cv2.rectangle(frame, 
-                                  (int(x), int(y)), 
-                                  (int(x+w), int(y+h)), 
-                                  (0, 255, 0), 2)
-                    cv2.putText(frame, 
-                                plate_info['text'], 
-                                (int(x), int(y-10)), 
-                                cv2.FONT_HERSHEY_SIMPLEX, 
-                                0.9, (0, 255, 0), 2)
-            
-            frame_placeholder.image(frame, channels="BGR")
-            time.sleep(0.1)
+            st.toast("🎥 Camera Activated Successfully!", icon="✅")
+
+        except Exception as e:
+            st.error(f"Camera Error: {e}")
+            if self.camera:
+                self.camera.release()
+            self.camera_active = False
     
-    def _handle_vehicle_entry(self, plate_info):
+    def _process_camera_frame(self, frame_placeholder):
         """
-        Advanced vehicle entry logic
+        Advanced Frame Processing
+        """
+        while self.camera_active and self.camera.isOpened():
+            try:
+                ret, frame = self.camera.read()
+                if not ret:
+                    st.error("Frame Capture Failed")
+                    break
+                
+                # Detect plates
+                plates = self.plate_detector.detect_plates(frame)
+                
+                for x1, y1, x2, y2 in plates:
+                    # Extract plate region
+                    plate_img = frame[y1:y2, x1:x2]
+                    
+                    plate_info = self.plate_detector.process_plate(plate_img)
+                    
+                    if plate_info and plate_info['text']:
+                        plate_number = plate_info['text']
+                        
+                        # Entry/Exit Logic
+                        if plate_number not in [v['plate'] for v in self.vehicle_log]:
+                            self._handle_vehicle_entry(plate_info, frame)
+                        else:
+                            self._handle_vehicle_exit(plate_info)
+                        
+                        # Visualization
+                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                        cv2.putText(frame, plate_number, 
+                                    (x1, y1-10), 
+                                    cv2.FONT_HERSHEY_SIMPLEX, 
+                                    0.6, (0, 255, 0), 1)
+                
+                frame_placeholder.image(frame, channels="BGR")
+                time.sleep(0.05)
+
+            except Exception as e:
+                st.error(f"Processing Error: {e}")
+                break
+    
+    def _handle_vehicle_entry(self, plate_info, frame):
+        """
+        Sophisticated Vehicle Entry Handler
         """
         plate_number = plate_info['text']
         
-        # Check parking capacity
-        if st.session_state.current_occupancy >= st.session_state.total_capacity:
-            st.warning("Parking is full!")
-            return
-        
-        # Prevent duplicate entries
-        if plate_number not in st.session_state.parking_entries:
-            # Log entry
-            entry_tx = self.blockchain_manager.log_vehicle_entry(
+        try:
+            # Blockchain Transaction
+            blockchain_tx = self.blockchain_manager.log_vehicle_entry(
                 plate_number, 
-                plate_info['confidence']
+                plate_info.get('confidence', 0.9)
             )
             
-            # Update parking state
-            st.session_state.parking_entries[plate_number] = {
-                'entry_time': time.strftime("%Y-%m-%d %H:%M:%S"),
-                'blockchain_tx': entry_tx,
-                'confidence': plate_info['confidence']
+            # Log Entry
+            entry_record = {
+                'plate': plate_number,
+                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'status': 'INSIDE',
+                'blockchain_tx': blockchain_tx.get('transaction_hash', 'N/A') if blockchain_tx else 'N/A'
             }
             
-            st.session_state.current_occupancy += 1
-            st.success(f"Vehicle {plate_number} entered")
+            self.vehicle_log.append(entry_record)
+            
+            # Optional: Save plate image
+            cv2.imwrite(f"detected_plates/{plate_number}_entry.jpg", frame)
+            
+            st.toast(f"🚗 {plate_number} Entered Parking", icon="🟢")
+        
+        except Exception as e:
+            st.error(f"Entry Logging Failed: {e}")
     
     def _handle_vehicle_exit(self, plate_info):
         """
-        Advanced vehicle exit logic
+        Sophisticated Vehicle Exit Handler
         """
         plate_number = plate_info['text']
         
-        if plate_number in st.session_state.parking_entries:
-            # Calculate parking duration
-            entry_time = st.session_state.parking_entries[plate_number]['entry_time']
-            exit_time = time.strftime("%Y-%m-%d %H:%M:%S")
+        try:
+            # Find and update entry record
+            for record in self.vehicle_log:
+                if record['plate'] == plate_number and record['status'] == 'INSIDE':
+                    # Blockchain Exit Transaction
+                    blockchain_tx = self.blockchain_manager.log_vehicle_exit(plate_number)
+                    
+                    record.update({
+                        'exit_timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        'status': 'OUTSIDE',
+                        'exit_blockchain_tx': blockchain_tx.get('transaction_hash', 'N/A') if blockchain_tx else 'N/A'
+                    })
+                    
+                    st.toast(f"🚪 {plate_number} Exited Parking", icon="🔴")
+                    break
+        
+        except Exception as e:
+            st.error(f"Exit Logging Failed: {e}")
+    
+    def _stop_camera(self):
+        """
+        Graceful Camera Shutdown
+        """
+        try:
+            self.camera_active = False
             
-            # Remove from active parking
-            del st.session_state.parking_entries[plate_number]
+            if self.camera:
+                self.camera.release()
+                self.camera = None
             
-            st.session_state.current_occupancy -= 1
-            st.info(f"Vehicle {plate_number} exited")
+            if self.detection_thread:
+                self.detection_thread.join(timeout=2)
+                self.detection_thread = None
+            
+            st.toast("📷 Camera Deactivated", icon="⚠️")
+        
+        except Exception as e:
+            st.error(f"Camera Shutdown Error: {e}")
     
-    def _occupancy_page(self):
+    def run(self):
         """
-        Real-time parking occupancy dashboard
+        Elite Dashboard Design
         """
-        st.header("📊 Parking Occupancy")
-        
-        # Occupancy visualization
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.metric(
-                "Current Occupancy", 
-                f"{st.session_state.current_occupancy}/{st.session_state.total_capacity}"
-            )
-        
-        with col2:
-            occupancy_percentage = (
-                st.session_state.current_occupancy / st.session_state.total_capacity
-            ) * 100
-            st.progress(occupancy_percentage / 100)
-        
-        # Current vehicles
-        st.subheader("Vehicles in Parking")
-        st.dataframe(st.session_state.parking_entries)
-    
-    def _vehicle_history_page(self):
-        """
-        Comprehensive vehicle history
-        """
-        st.header("🕒 Vehicle Entry/Exit History")
-        
-        # Filtering options
-        col1, col2 = st.columns(2)
-        with col1:
-            plate_filter = st.text_input("Filter by Plate")
-        with col2:
-            date_filter = st.date_input("Filter by Date")
-        
-        # Implement filtering logic here
-    
-    def _parking_analytics_page(self):
-        """
-        Advanced parking analytics
-        """
-        st.header("📈 Parking Analytics")
-        # Implement peak hours, average stay duration, etc.
-    
-    def _system_settings_page(self):
-        """
-        System configuration
-        """
-        st.header("⚙️ Parking System Settings")
-        
-        # Capacity configuration
-        new_capacity = st.number_input(
-            "Total Parking Capacity", 
-            min_value=10, 
-            max_value=500, 
-            value=st.session_state.total_capacity
+        st.set_page_config(
+            page_title="🚗 Smart Parking AI", 
+            page_icon="🚦", 
+            layout="wide"
         )
         
-        if st.button("Update Capacity"):
-            st.session_state.total_capacity = new_capacity
-            st.success("Parking capacity updated")
+        # Custom CSS for Elite Design
+        st.markdown("""
+        <style>
+        .stApp {
+            background-color: #0E1117;
+            color: #FFFFFF;
+        }
+        .stButton>button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            transition-duration: 0.4s;
+            cursor: pointer;
+        }
+        .stDataFrame {
+            background-color: #1E2130;
+            color: white;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # Dashboard Layout
+        st.title("🚦 Smart Parking Management System")
+        
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            st.subheader("🎥 Live Camera Feed")
+            camera_placeholder = st.empty()
+            
+            cam_col1, cam_col2 = st.columns(2)
+            with cam_col1:
+                if st.button("Start Camera", key="start_cam"):
+                    self._start_camera()
+            
+            with cam_col2:
+                if st.button("Stop Camera", key="stop_cam"):
+                    self._stop_camera()
+        
+        with col2:
+            st.subheader("📊 Vehicle Dashboard")
+            
+            # Convert vehicle log to DataFrame
+            if self.vehicle_log:
+                df = pd.DataFrame(self.vehicle_log)
+                st.dataframe(
+                    df[['plate', 'timestamp', 'status']],
+                    column_config={
+                        "plate": "Number Plate",
+                        "timestamp": "Entry Time",
+                        "status": st.column_config.TextColumn(
+                            "Status",
+                            help="Vehicle Location Status",
+                            width="small"
+                        )
+                    },
+                    hide_index=True
+                )
+            else:
+                st.info("No vehicles detected yet")
 
 def main():
     app = ParkingManagementSystem()
