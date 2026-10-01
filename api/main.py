@@ -1,4 +1,7 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+import logging
+import os
+
+from fastapi import FastAPI, File, UploadFile, HTTPException, Path, Query
 from fastapi.middleware.cors import CORSMiddleware
 import cv2
 import numpy as np
@@ -14,13 +17,19 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS Configuration
+logger = logging.getLogger(__name__)
+
+# Uploads larger than this are refused before decoding.
+MAX_UPLOAD_BYTES = int(os.environ.get("MAX_UPLOAD_BYTES", 10 * 1024 * 1024))
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png"}
+
+# CORS: only the origins listed in CORS_ORIGINS (comma-separated), never "*".
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[o for o in os.environ.get("CORS_ORIGINS", "http://localhost:8501").split(",") if o],
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 
 # Initialize components
@@ -34,10 +43,18 @@ async def detect_vehicle(file: UploadFile = File(...)):
     Detect vehicle plate from uploaded image
     """
     try:
-        # Read image
-        contents = await file.read()
+        if file.content_type not in ALLOWED_IMAGE_TYPES:
+            raise HTTPException(status_code=415, detail="Upload a JPEG or PNG image")
+
+        # Read one byte past the limit so an oversized upload is caught without reading it all
+        contents = await file.read(MAX_UPLOAD_BYTES + 1)
+        if len(contents) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="Image is too large")
+
         nparr = np.frombuffer(contents, np.uint8)
         frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        if frame is None:
+            raise HTTPException(status_code=400, detail="Could not decode the image")
         
         # Detect plates
         plates = detector.detect_plates(frame)
@@ -68,23 +85,29 @@ async def detect_vehicle(file: UploadFile = File(...)):
             "total_plates": len(detected_plates)
         }
     
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Request failed")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.get("/recent_entries/")
-def get_recent_entries(limit: int = 10):
+def get_recent_entries(limit: int = Query(10, ge=1, le=100)):
     """
     Retrieve recent vehicle entries
     """
     try:
         recent_entries = vehicle_logger.get_recent_entries(limit)
         return {"entries": recent_entries}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Request failed")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 # Blockchain-specific endpoints
 @app.get("/blockchain/verify/{plate_number}")
-def verify_vehicle_entry(plate_number: str):
+def verify_vehicle_entry(plate_number: str = Path(..., min_length=1, max_length=20)):
     """
     Verify a vehicle's blockchain entry
     """
@@ -97,9 +120,12 @@ def verify_vehicle_entry(plate_number: str):
             "is_active": is_active,
             "verified": True
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Request failed")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=os.environ.get("API_HOST", "127.0.0.1"), port=8000)

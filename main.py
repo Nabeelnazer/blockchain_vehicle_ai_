@@ -40,7 +40,8 @@ def run_api_server():
     try:
         import uvicorn
         logger.info("Starting FastAPI server...")
-        uvicorn.run("api.main:app", host="0.0.0.0", port=8000, reload=True)
+        uvicorn.run("api.main:app", host=os.environ.get("API_HOST", "127.0.0.1"), port=8000,
+                    reload=os.environ.get("API_RELOAD", "false").lower() == "true")
     except Exception as e:
         logger.error(f"API server failed: {e}")
 
