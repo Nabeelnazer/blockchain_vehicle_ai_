@@ -10,7 +10,7 @@ class VehicleLogger:
         self.db_manager = DatabaseManager()
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
-        
+
         # Add console handler if not already added
         if not self.logger.handlers:
             ch = logging.StreamHandler()
@@ -20,24 +20,35 @@ class VehicleLogger:
             )
             ch.setFormatter(formatter)
             self.logger.addHandler(ch)
-    
+
     def log_vehicle_entry(self, plate_number, confidence=None):
         """
-        Log a vehicle entry to both database and log file
+        Log a vehicle entry to both database and log file.
+        Returns the entry's row id, or None if it could not be saved.
         """
         try:
-            # Log to database
-            self.db_manager.log_entry(plate_number, confidence)
-            
-            # Log to console/file
-            self.logger.info(f"Vehicle Entry - Plate: {plate_number} Confidence: {confidence:.2f}")
-            
-            return True
-            
+            entry_id = self.db_manager.log_entry(plate_number, confidence)
+
+            shown = f"{confidence:.2f}" if confidence is not None else "n/a"
+            self.logger.info(f"Vehicle Entry - Plate: {plate_number} Confidence: {shown}")
+
+            return entry_id
+
         except Exception as e:
             self.logger.error(f"Error logging vehicle entry: {str(e)}")
-            return False
-    
+            return None
+
+    def record_blockchain_tx(self, entry_id, blockchain_tx):
+        """
+        Attach the blockchain result to a saved entry
+        """
+        if entry_id is None:
+            return
+        try:
+            self.db_manager.update_blockchain_tx(entry_id, blockchain_tx)
+        except Exception as e:
+            self.logger.error(f"Error saving blockchain tx: {str(e)}")
+
     def get_recent_entries(self, limit=5):
         """
         Get recent vehicle entries

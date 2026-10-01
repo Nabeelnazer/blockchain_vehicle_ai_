@@ -24,7 +24,7 @@ async function main() {
   const deploymentPath = path.join(__dirname, '..', '..', 'deployment-info.json');
   const contractInfo = {
     address: contractAddress,
-    abi: JSON.parse(JSON.stringify(vehicleRegistry.interface.fragments))
+    abi: JSON.parse(vehicleRegistry.interface.formatJson())
   };
   
   fs.writeFileSync(deploymentPath, JSON.stringify(contractInfo, null, 2));

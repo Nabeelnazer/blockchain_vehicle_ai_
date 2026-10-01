@@ -29,9 +29,11 @@ def run_blockchain_setup():
 def run_detection_system():
     """Run the main vehicle detection system"""
     try:
-        from ui.app import main as run_ui
+        # A Streamlit app only renders under `streamlit run`, not as a plain call
+        import subprocess
+        app_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ui', 'app.py')
         logger.info("Starting Vehicle Detection UI...")
-        run_ui()
+        subprocess.run([sys.executable, '-m', 'streamlit', 'run', app_path], check=True)
     except Exception as e:
         logger.error(f"Detection system failed: {e}")
 
@@ -40,7 +42,8 @@ def run_api_server():
     try:
         import uvicorn
         logger.info("Starting FastAPI server...")
-        uvicorn.run("api.main:app", host="0.0.0.0", port=8000, reload=True)
+        uvicorn.run("api.main:app", host=os.environ.get("API_HOST", "127.0.0.1"), port=8000,
+                    reload=os.environ.get("API_RELOAD", "false").lower() == "true")
     except Exception as e:
         logger.error(f"API server failed: {e}")
 

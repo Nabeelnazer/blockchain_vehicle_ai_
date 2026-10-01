@@ -49,7 +49,7 @@ contract VehicleRegistry {
     function logVehicleEntry(
         string memory _plateNumber, 
         uint256 _confidence
-    ) public returns (uint256) {
+    ) public onlyOwner returns (uint256) {
         // Prevent re-entry of active vehicles
         require(!activeVehicles[_plateNumber], "Vehicle already in parking");
 
@@ -76,7 +76,7 @@ contract VehicleRegistry {
     }
 
     // Function to log vehicle exit
-    function logVehicleExit(string memory _plateNumber) public {
+    function logVehicleExit(string memory _plateNumber) public onlyOwner {
         require(activeVehicles[_plateNumber], "Vehicle not in parking");
 
         // Find the last active entry for this plate number

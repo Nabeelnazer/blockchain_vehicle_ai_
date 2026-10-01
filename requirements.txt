@@ -1,17 +1,20 @@
 # Core ML and CV
-paddlepaddle
-paddleocr
+# PaddleOCR 3.x changed the constructor (no show_log) and the ocr() result
+# format that detection/yolo_detector.py reads, so stay on 2.x.
+paddlepaddle>=2.5,<3
+paddleocr>=2.7,<3
 opencv-python>=4.8.0
 numpy>=1.21.0
 ultralytics>=8.0.0
 easyocr>=1.7.0
-# Blockchain
-web3>=6.0.0
-py-solc-x
+# Blockchain (v7 API: from_block, to_hex)
+web3>=7.0,<8
 # Web and API
 fastapi
 uvicorn
+python-multipart  # required by FastAPI for UploadFile
 streamlit
+pandas
 # Database
 sqlalchemy>=2.0.0
 psycopg2-binary>=2.9.6
@@ -20,8 +23,4 @@ python-dotenv
 # Testing Dependencies
 pytest>=7.0.0
 pytest-cov>=3.0.0
-# Blockchain Development
-hardhat
-ethereum-waffle
-chai
-ethers
+# Hardhat, ethers and chai are npm packages: install them with `npm ci`, not pip.

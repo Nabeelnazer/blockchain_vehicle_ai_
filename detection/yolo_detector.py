@@ -1,3 +1,5 @@
+import re
+
 import cv2
 import numpy as np
 from ultralytics import YOLO
@@ -22,7 +24,8 @@ class NumberPlateDetector:
         """
         Detect plates using YOLO
         """
-        results = self.yolo_model(frame)
+        results = self.yolo_model(frame, verbose=False)
+        height, width = frame.shape[:2]
         plates = []
         for result in results:
             for box in result.boxes:
@@ -32,7 +35,11 @@ class NumberPlateDetector:
                 
                 # Confidence and class filtering
                 if class_id == 0 and confidence > 0.5:
-                    plates.append((int(x1), int(y1), int(x2), int(y2)))
+                    # Clamp to the frame so the crop is never empty or wrapped
+                    x1, x2 = max(0, int(x1)), min(width, int(x2))
+                    y1, y2 = max(0, int(y1)), min(height, int(y2))
+                    if x2 > x1 and y2 > y1:
+                        plates.append((x1, y1, x2, y2))
         
         return plates
     
@@ -45,11 +52,15 @@ class NumberPlateDetector:
             results = self.ocr.ocr(plate_img, cls=True)
             
             if results and results[0]:
-                text = results[0][0][1][0]  # Detected text
-                confidence = results[0][0][1][1]  # Confidence score
+                # Two-row plates come back as two lines, top first: join them all
+                lines = sorted(results[0], key=lambda line: line[0][0][1])
+                text = ''.join(line[1][0] for line in lines)
+                confidence = min(float(line[1][1]) for line in lines)
                 
                 # Clean and validate plate number
                 cleaned_text = self._clean_plate_text(text)
+                if not cleaned_text:
+                    return None
                 
                 return {
                     'text': cleaned_text,
@@ -66,7 +77,6 @@ class NumberPlateDetector:
         Clean and validate plate number
         """
         # Remove non-alphanumeric characters
-        import re
         cleaned = re.sub(r'[^A-Z0-9]', '', text.upper())
         
         # Indian plate validation regex patterns
@@ -82,7 +92,8 @@ class NumberPlateDetector:
         
         # Check against patterns
         if any(re.match(pattern, cleaned) for pattern in indian_plate_patterns):
-            # Format plate number
-            return f"{cleaned[:2]} {cleaned[2:4]} {cleaned[4:6]} {cleaned[6:]}"
+            # Format as "KL 07 A 1234" / "KL 07 AB 1234" (the series is 1 or 2 letters)
+            m = re.match(r'^([A-Z]{2})(\d{2})([A-Z]{1,2})(\d{4})$', cleaned)
+            return ' '.join(m.groups())
         
         return None
