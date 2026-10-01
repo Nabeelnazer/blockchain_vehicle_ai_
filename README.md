@@ -3,19 +3,25 @@
  paddle ocr for fetching data
 integrating blockchain smartcontract for database.
 
+## Running it
+1. `pip install -r requirements.txt` and `npm ci`
+2. Copy `.env.example` to `.env` and fill it in
+3. Start a local chain: `npx hardhat node` (leave it running)
+4. Deploy the contract to it: `npm run deploy`, which writes `deployment-info.json`
+5. Dashboard: `streamlit run ui/app.py`. API: `python main.py` or `uvicorn api.main:app`
+
+Without the node running, detections are still saved to SQLite; only the on-chain copy is skipped.
+
 ## Blockchain Details
-- Using Ganache local blockchain
-- Each detected plate is hashed and stored on-chain
-- Transactions include plate text, timestamp, and confidence
-- Initial balance: 300k test ETH
-- Automatic account setup using Ganache's first account
+- Local Hardhat node at `127.0.0.1:8545`; the app writes with its first account
+- Only the deploying account may log entries and exits (`onlyOwner`)
+- Each entry stores plate text, timestamp and OCR confidence on-chain
 
 ## Troubleshooting
 
-1. If Ganache connection fails:
-   - Ensure Ganache is running
-   - Verify the RPC Server address
-   - Check if the account has sufficient test ETH
+1. If the blockchain connection fails:
+   - Ensure `npx hardhat node` is running
+   - Redeploy after restarting the node (`npm run deploy`): a fresh node has no contract
 
 2. If camera doesn't work:
    - Check camera permissions

@@ -29,9 +29,11 @@ def run_blockchain_setup():
 def run_detection_system():
     """Run the main vehicle detection system"""
     try:
-        from ui.app import main as run_ui
+        # A Streamlit app only renders under `streamlit run`, not as a plain call
+        import subprocess
+        app_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ui', 'app.py')
         logger.info("Starting Vehicle Detection UI...")
-        run_ui()
+        subprocess.run([sys.executable, '-m', 'streamlit', 'run', app_path], check=True)
     except Exception as e:
         logger.error(f"Detection system failed: {e}")
 

@@ -68,7 +68,7 @@ class BlockchainManager:
             tx_receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
             
             return {
-                'transaction_hash': tx_receipt.transactionHash.hex(),
+                'transaction_hash': Web3.to_hex(tx_receipt.transactionHash),
                 'block_number': tx_receipt.blockNumber
             }
         except Exception as e:
@@ -97,26 +97,66 @@ class BlockchainManager:
             tx_receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
             
             return {
-                'transaction_hash': tx_receipt.transactionHash.hex(),
+                'transaction_hash': Web3.to_hex(tx_receipt.transactionHash),
                 'block_number': tx_receipt.blockNumber
             }
         except Exception as e:
             print(f"Error logging vehicle exit: {e}")
             return None
     
+    @staticmethod
+    def _entry_to_dict(entry):
+        """VehicleEntry tuple from the contract -> plain dict"""
+        owner, plate_number, entry_ts, exit_ts, is_active, confidence = entry
+        return {
+            'owner': owner,
+            'plate_number': plate_number,
+            'entry_timestamp': datetime.fromtimestamp(entry_ts),
+            'exit_timestamp': datetime.fromtimestamp(exit_ts) if exit_ts else None,
+            'is_active': is_active,
+            'confidence': confidence / 100,
+        }
+
     def get_vehicle_entries(self, plate_number):
         """
-        Retrieve vehicle entries from blockchain
+        Retrieve one plate's entries from blockchain
         """
         if not self.contract:
             raise ValueError("Contract not initialized")
         
         try:
             entries = self.contract.functions.getVehicleEntries(plate_number).call()
-            return entries
+            return [self._entry_to_dict(e) for e in entries]
         except Exception as e:
             print(f"Error retrieving vehicle entries: {e}")
             return []
+    
+    def get_all_entries(self):
+        """
+        Every entry on chain. The contract has no "list all" call, so the
+        plates are found from VehicleEntered events, each carrying the hash
+        of the transaction that logged it.
+        """
+        if not self.contract:
+            raise ValueError("Contract not initialized")
+        
+        try:
+            events = self.contract.events.VehicleEntered.get_logs(from_block=0)
+        except Exception as e:
+            print(f"Error reading entry events: {e}")
+            return []
+        
+        tx_by_entry = {
+            (ev['args']['plateNumber'], ev['args']['entryTimestamp']): Web3.to_hex(ev['transactionHash'])
+            for ev in events
+        }
+        entries = []
+        for plate in dict.fromkeys(ev['args']['plateNumber'] for ev in events):
+            for entry in self.get_vehicle_entries(plate):
+                ts = int(entry['entry_timestamp'].timestamp())
+                entry['transaction_hash'] = tx_by_entry.get((plate, ts))
+                entries.append(entry)
+        return entries
     
     def verify_vehicle_entry(self, plate_number):
         """
@@ -139,14 +179,11 @@ class BlockchainManager:
         if isinstance(end_date, str):
             end_date = datetime.fromisoformat(end_date)
         
-        filtered_entries = []
-        entries = self.get_vehicle_entries(None)
-        for entry in entries:
-            if (start_date is None or entry['entry_timestamp'] >= start_date) and \
-               (end_date is None or entry['entry_timestamp'] <= end_date):
-                filtered_entries.append(entry)
-        
-        return filtered_entries
+        return [
+            entry for entry in self.get_all_entries()
+            if (start_date is None or entry['entry_timestamp'] >= start_date)
+            and (end_date is None or entry['entry_timestamp'] <= end_date)
+        ]
     
     def export_entries(self, filename=None):
         """
@@ -159,9 +196,9 @@ class BlockchainManager:
             filename = f"vehicle_entries_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         
         try:
-            entries = self.get_vehicle_entries(None)
+            entries = self.get_all_entries()
             with open(filename, 'w') as f:
-                json.dump(entries, f, indent=4)
+                json.dump(entries, f, indent=4, default=str)
             return filename
         except Exception as e:
             print(f"Error exporting entries: {e}")
@@ -171,8 +208,7 @@ class BlockchainManager:
         """
         Retrieve entry details by transaction hash
         """
-        entries = self.get_vehicle_entries(None)
-        for entry in entries:
+        for entry in self.get_all_entries():
             if entry['transaction_hash'] == transaction_hash:
                 return entry
         return None
@@ -193,7 +229,7 @@ def setup_blockchain():
         subprocess.run(['npx', 'hardhat', 'compile'], check=True)
         
         # Deploy contract
-        subprocess.run(['npx', 'hardhat', 'run', 'blockchain/scripts/deploy.js'], check=True)
+        subprocess.run(['npx', 'hardhat', 'run', 'blockchain/scripts/deploy.js', '--network', 'localhost'], check=True)
         
         # Initialize blockchain manager
         return BlockchainManager()

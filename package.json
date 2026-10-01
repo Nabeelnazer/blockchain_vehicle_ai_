@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "hardhat clean",
     "compile": "hardhat compile",
-    "deploy": "hardhat run blockchain/scripts/deploy.js",
+    "deploy": "hardhat run blockchain/scripts/deploy.js --network localhost",
     "node": "hardhat node",
     "prepare": "npm install --legacy-peer-deps",
     "audit": "npm audit",

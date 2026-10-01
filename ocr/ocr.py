@@ -38,11 +38,10 @@ class OCRStabilizer:
         # Remove non-alphanumeric characters
         cleaned = re.sub(r'[^A-Z0-9]', '', text.upper())
         
-        # Kerala plate format validation (optional)
-        if cleaned.startswith('KL'):
-            # Try to format as KL DD XX NNNN
-            if len(cleaned) >= 8:
-                return f"KL {cleaned[2:4]} {cleaned[4:6]} {cleaned[6:]}"
+        # Format a valid plate as "KL 07 A 1234" / "KL 07 AB 1234" (series is 1 or 2 letters)
+        m = re.match(r'^([A-Z]{2})(\d{2})([A-Z]{1,2})(\d{4})$', cleaned)
+        if m:
+            return ' '.join(m.groups())
         
         return cleaned
     

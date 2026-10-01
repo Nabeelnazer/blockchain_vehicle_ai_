@@ -2,6 +2,8 @@ def retrieve_vehicle_entries(blockchain_manager, plate_number=None):
     """
     Retrieve vehicle entries
     """
+    if plate_number is None:
+        return blockchain_manager.get_all_entries()
     return blockchain_manager.get_vehicle_entries(plate_number)
 
 def filter_entries_by_date(blockchain_manager, start_date, end_date):

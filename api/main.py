@@ -7,7 +7,6 @@ import cv2
 import numpy as np
 
 from detection.yolo_detector import NumberPlateDetector
-from ocr.ocr import OCRStabilizer
 from blockchain.blockchain_manager import BlockchainManager
 from database.vehicle_log import VehicleLogger
 
@@ -34,8 +33,24 @@ app.add_middleware(
 
 # Initialize components
 detector = NumberPlateDetector('best.pt')
-ocr = OCRStabilizer()
 vehicle_logger = VehicleLogger()
+
+_blockchain_manager = None
+
+
+def get_blockchain_manager():
+    """Shared connection, or None while the node or contract is unavailable.
+
+    Retried on each call so the API recovers once the node comes up."""
+    global _blockchain_manager
+    if _blockchain_manager is None:
+        try:
+            manager = BlockchainManager()
+            if manager.contract is not None:
+                _blockchain_manager = manager
+        except Exception:
+            logger.warning("Blockchain unavailable; entries are saved locally only", exc_info=True)
+    return _blockchain_manager
 
 @app.post("/detect/")
 async def detect_vehicle(file: UploadFile = File(...)):
@@ -60,23 +75,30 @@ async def detect_vehicle(file: UploadFile = File(...)):
         plates = detector.detect_plates(frame)
         
         detected_plates = []
-        for x, y, w, h in plates:
-            # Extract plate region
-            plate_img = frame[int(y):int(y+h), int(x):int(x+w)]
+        for x1, y1, x2, y2 in plates:
+            # Extract plate region (the detector returns corners, not width/height)
+            plate_img = frame[y1:y2, x1:x2]
             
-            # OCR plate number
-            plate_number = ocr.get_stable_plate_number(plate_img)
+            # OCR plate number: one read per upload, no multi-frame stabilising
+            plate_info = detector.process_plate(plate_img)
             
-            if plate_number:
+            if plate_info:
+                plate_number = plate_info['text']
+                confidence = plate_info['confidence']
+                
                 # Log to database
-                vehicle_logger.log_vehicle_entry(plate_number)
+                entry_id = vehicle_logger.log_vehicle_entry(plate_number, confidence)
                 
                 # Optional: Blockchain logging
-                blockchain_manager = BlockchainManager()
-                blockchain_tx = blockchain_manager.log_vehicle_entry(plate_number)
+                blockchain_tx = None
+                blockchain_manager = get_blockchain_manager()
+                if blockchain_manager:
+                    blockchain_tx = blockchain_manager.log_vehicle_entry(plate_number, confidence)
+                    vehicle_logger.record_blockchain_tx(entry_id, blockchain_tx)
                 
                 detected_plates.append({
                     'plate_number': plate_number,
+                    'confidence': confidence,
                     'blockchain_tx': blockchain_tx
                 })
         
@@ -112,7 +134,9 @@ def verify_vehicle_entry(plate_number: str = Path(..., min_length=1, max_length=
     Verify a vehicle's blockchain entry
     """
     try:
-        blockchain_manager = BlockchainManager()
+        blockchain_manager = get_blockchain_manager()
+        if blockchain_manager is None:
+            raise HTTPException(status_code=503, detail="Blockchain unavailable")
         is_active = blockchain_manager.contract.functions.isVehicleActive(plate_number).call()
         
         return {

@@ -33,7 +33,7 @@ def setup_blockchain():
         
         # Deploy contract
         deploy_result = subprocess.run(
-            ['npx', 'hardhat', 'run', 'blockchain/scripts/deploy.js'], 
+            ['npx', 'hardhat', 'run', 'blockchain/scripts/deploy.js', '--network', 'localhost'], 
             capture_output=True, 
             text=True
         )
